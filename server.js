@@ -1,40 +1,66 @@
+// -----------------------------
+// Imports & Initial Setup
+// -----------------------------
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const authRoutes = require("./routes/authRoutes");
-const notificationRoutes = require("./routes/notificationRoutes");
-// Load environment variables from .env file
+const path = require("path");
+const fs = require("fs"); // 👈 Add this
+
+// Load environment variables
 dotenv.config();
 
-// Create Express app
-const app = express();
+// -----------------------------
+// Ensure Uploads Directory Exists 👇
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+   fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
+// -----------------------------
+// Routes
+// -----------------------------
+const authRoutes = require("./routes/authRoutes");
+const authProfileRoutes = require("./routes/authProfile");
+const notificationRoutes = require("./routes/notificationRoutes");
+
+// -----------------------------
+// App Initialization
+// -----------------------------
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// -----------------------------
 // Middleware
+// -----------------------------
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static(uploadsDir)); // ✅ serve images
 
-// Connect to MongoDB
-mongoose
-   .connect(process.env.MONGODB_URI)
-   .then(() => console.log("✅ Connected to MongoDB"))
-   .catch((err) => console.error("❌ MongoDB connection error:", err));
-
+// -----------------------------
 // Routes
+// -----------------------------
 app.use("/api/auth", authRoutes);
+app.use("/api/profile", authProfileRoutes);
 app.use("/api/notifications", notificationRoutes);
 
-// Basic health check route
 app.get("/", (req, res) => {
    res.send("✅ Backend is running!");
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-// command: npm run dev -- --host
-app.listen(PORT, "0.0.0.0", () => {
-   // Open the server URL in the default browser
-   console.log(
-      `🚀 Server is running on port ${PORT} , full URL: http://192.168.100.2:${PORT} open on browser: alt + click`
-   );
-});
+// -----------------------------
+// MongoDB Connection
+// -----------------------------
+mongoose
+   .connect(process.env.MONGODB_URI)
+   .then(() => {
+      console.log("✅ Connected to MongoDB");
+      app.listen(PORT, "0.0.0.0", () => {
+         console.log(`🚀 Server running at http://192.168.100.2:${PORT}`);
+      });
+   })
+   .catch((err) => {
+      console.error("❌ MongoDB connection error:", err);
+      process.exit(1);
+   });

@@ -162,7 +162,7 @@ const AuthController = {
    async resetPassword(req, res) {
       const { token } = req.params;
       const { password } = req.body;
-
+      console.log("Reset Password Token:", token);
       try {
          const userId = resetTokens.get(token);
          if (!userId) {

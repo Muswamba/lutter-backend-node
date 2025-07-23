@@ -1,15 +1,17 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const ImageSchema = require("./Image"); // ✅ Include it
 
 const userSchema = new mongoose.Schema(
    {
       name: { type: String, required: true },
       email: { type: String, required: true, unique: true },
       password: { type: String, required: true },
-      role: { type: String, default: "user" }, // Optional role field
-      avatar: { type: String }, // You can enhance this later
-      backgroundImage: { type: String },
-      // device info
+      role: { type: String, default: "user" },
+
+      avatar: ImageSchema, // ✅ Embedded Image model
+      backgroundImage: ImageSchema,
+
       deviceInfo: [
          {
             deviceId: String,
@@ -21,10 +23,10 @@ const userSchema = new mongoose.Schema(
          },
       ],
    },
-   { timestamps: true } // Automatically adds createdAt and updatedAt
+   { timestamps: true }
 );
 
-// Hash password before save
+// ✅ Password hashing
 userSchema.pre("save", async function (next) {
    if (this.isModified("password")) {
       this.password = await bcrypt.hash(this.password, 12);
@@ -32,7 +34,7 @@ userSchema.pre("save", async function (next) {
    next();
 });
 
-// Customize toJSON output to use `id` instead of `_id`
+// ✅ Clean JSON output
 userSchema.method("toJSON", function () {
    const { _id, __v, password, ...object } = this.toObject();
    object.id = _id;
